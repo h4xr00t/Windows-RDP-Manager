@@ -75,8 +75,8 @@ if ($savedConfig) {
     Write-Log "No configuration file found at $ConfigPath" WARN
 }
 
-if (-not $Author) { $Author = 'h4xr00t' }
-if ($Author -eq 'h4xr00t') {
+if (-not $Author) { $Author = 'REPLACE_WITH_AUTHOR_NAME' }
+if ($Author -eq 'REPLACE_WITH_AUTHOR_NAME') {
     Write-Log 'Author is still the placeholder. Set -Author or run Initialize-Config.ps1.' WARN
 }
 
@@ -117,7 +117,7 @@ if ($Username) {
     $existingUser = Get-LocalUser -Name $Username -ErrorAction SilentlyContinue
     if (-not $existingUser) {
         Write-Log "User '$Username' does not exist; session timer task not registered." WARN
-    } elseif ($Author -eq 'h4xr00t') {
+    } elseif ($Author -eq 'REPLACE_WITH_AUTHOR_NAME') {
         Write-Log 'Author is placeholder; session timer task not registered.' WARN
     } else {
         Register-SessionTimerTask -UserName $Username -Duration $DurationMinutes -AuthorName $Author
