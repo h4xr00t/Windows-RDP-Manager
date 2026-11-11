@@ -47,14 +47,19 @@ function Set-RdpFirewallRule {
 
 function Test-RdpListener {
     [CmdletBinding()]
-    param()
+    param([int]$TimeoutSeconds = 15)
 
-    $tcp = Get-NetTCPConnection -LocalPort 3389 -State Listen -ErrorAction SilentlyContinue
-    if ($tcp) {
-        Write-Log 'RDP listener is active on port 3389.' SUCCESS
-        return $true
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $tcp = Get-NetTCPConnection -LocalPort 3389 -State Listen -ErrorAction SilentlyContinue
+        if ($tcp) {
+            Write-Log 'RDP listener is active on port 3389.' SUCCESS
+            return $true
+        }
+        Start-Sleep -Seconds 1
     }
-    Write-Log 'RDP listener NOT found on port 3389.' ERROR
+
+    Write-Log "RDP listener NOT found on port 3389 after $TimeoutSeconds seconds." ERROR
     return $false
 }
 
@@ -65,8 +70,8 @@ Write-Log 'Starting RDP configuration...'
 Enable-RemoteDesktop
 Set-RdpFirewallRule -Cidr $TailscaleCidr
 
-if (-not (Test-RdpListener)) {
-    throw 'RDP setup failed: service is not listening.'
+if (-not (Test-RdpListener -TimeoutSeconds 15)) {
+    throw 'RDP setup failed: service is not listening on 3389 after 15 seconds.'
 }
 
 Write-Log 'RDP setup completed successfully.' SUCCESS
