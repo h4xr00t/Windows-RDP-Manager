@@ -42,11 +42,11 @@ function Set-RdpLocalUser {
         Write-Log "User '$Name' enabled." INFO
     }
 
-    $rdpGroup = 'Remote Desktop Users'
-    $members  = Get-LocalGroupMember -Group $rdpGroup -ErrorAction SilentlyContinue
+    $rdpSid   = 'S-1-5-32-555'
+    $members  = Get-LocalGroupMember -SID $rdpSid -ErrorAction SilentlyContinue
     $already  = $members | Where-Object { $_.Name -match "\\$([regex]::Escape($Name))$" }
     if (-not $already) {
-        Add-LocalGroupMember -Group $rdpGroup -Member $Name
+        Add-LocalGroupMember -SID $rdpSid -Member $Name
         Write-Log "User '$Name' added to Remote Desktop Users." SUCCESS
     } else {
         Write-Log "User '$Name' is already a member of Remote Desktop Users." INFO
@@ -57,15 +57,15 @@ function Set-AdminMembership {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Name, [bool]$Enable)
 
-    $group    = 'Administrators'
-    $members  = Get-LocalGroupMember -Group $group -ErrorAction SilentlyContinue
+    $adminSid = 'S-1-5-32-544'
+    $members  = Get-LocalGroupMember -SID $adminSid -ErrorAction SilentlyContinue
     $isMember = $members | Where-Object { $_.Name -match "\\$([regex]::Escape($Name))$" }
 
     if ($Enable -and -not $isMember) {
-        Add-LocalGroupMember -Group $group -Member $Name
+        Add-LocalGroupMember -SID $adminSid -Member $Name
         Write-Log "User '$Name' added to Administrators." WARN
     } elseif (-not $Enable -and $isMember) {
-        Remove-LocalGroupMember -Group $group -Member $Name
+        Remove-LocalGroupMember -SID $adminSid -Member $Name
         Write-Log "User '$Name' removed from Administrators." INFO
     }
 }
