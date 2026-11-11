@@ -1,0 +1,32 @@
+# Logs
+*.log
+
+# Configuration and secrets
+config.xml
+*.config.xml
+*.secret
+*.key
+*.pem
+RDPManager/
+
+# Archives
+*.zip
+*.7z
+*.rar
+
+# Test results
+test-results.xml
+TestResults/
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Temp
+*.tmp
+*.temp
+*.bak
+Thumbs.db
+.DS_Store

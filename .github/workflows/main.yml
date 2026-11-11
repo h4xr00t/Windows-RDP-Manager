@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install modules
+        shell: pwsh
+        run: |
+          Install-Module Pester          -Force -Scope CurrentUser -MinimumVersion 5.0 -SkipPublisherCheck
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: PowerShell Syntax Check
+        shell: pwsh
+        run: |
+          $files  = Get-ChildItem -Path scripts -Filter *.ps1 -Recurse
+          $errors = @()
+          foreach ($f in $files) {
+            $tokens = $null; $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $f.FullName, [ref]$tokens, [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $errors += $parseErrors | ForEach-Object { "$($f.Name): $($_.Message)" }
+            }
+          }
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+          Write-Host "All scripts parsed successfully."
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path scripts -Recurse `
+                        -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize
+          if ($results | Where-Object { $_.Severity -eq 'Error' }) {
+            Write-Error "PSScriptAnalyzer found error-severity issues."
+            exit 1
+          }
+
+      - name: Pester Tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path             = 'tests'
+          $config.Output.Verbosity     = 'Detailed'
+          $config.TestResult.Enabled   = $true
+          $config.TestResult.OutputPath = 'test-results.xml'
+          Invoke-Pester -Configuration $config
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pester-results
+          path: test-results.xml
