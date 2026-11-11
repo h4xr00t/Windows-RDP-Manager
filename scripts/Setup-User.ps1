@@ -42,9 +42,10 @@ function Set-RdpLocalUser {
         Write-Log "User '$Name' enabled." INFO
     }
 
-    $rdpSid   = 'S-1-5-32-555'
-    $members  = Get-LocalGroupMember -SID $rdpSid -ErrorAction SilentlyContinue
-    $already  = $members | Where-Object { $_.Name -match "\\$([regex]::Escape($Name))$" }
+    # SID is language-independent (fr/de/ar/en all work)
+    $rdpSid  = 'S-1-5-32-555'
+    $members = Get-LocalGroupMember -SID $rdpSid -ErrorAction SilentlyContinue
+    $already = $members | Where-Object { $_.Name -match "\\$([regex]::Escape($Name))$" }
     if (-not $already) {
         Add-LocalGroupMember -SID $rdpSid -Member $Name
         Write-Log "User '$Name' added to Remote Desktop Users." SUCCESS
