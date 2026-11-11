@@ -29,8 +29,19 @@ function Get-UninstallEntry {
     )
     foreach ($p in $paths) {
         Get-ItemProperty -Path $p -ErrorAction SilentlyContinue |
-            Where-Object { $_.DisplayName } |
-            Select-Object DisplayName, UninstallString, QuietUninstallString
+            ForEach-Object {
+                $displayProp = $_.PSObject.Properties['DisplayName']
+                if (-not $displayProp -or [string]::IsNullOrWhiteSpace($displayProp.Value)) {
+                    return
+                }
+                $uninstallProp = $_.PSObject.Properties['UninstallString']
+                $quietProp     = $_.PSObject.Properties['QuietUninstallString']
+                [PSCustomObject]@{
+                    DisplayName          = $displayProp.Value
+                    UninstallString      = if ($uninstallProp) { $uninstallProp.Value } else { $null }
+                    QuietUninstallString = if ($quietProp)     { $quietProp.Value }     else { $null }
+                }
+            }
     }
 }
 
